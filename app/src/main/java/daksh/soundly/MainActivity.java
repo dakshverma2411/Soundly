@@ -24,6 +24,8 @@ import android.os.IBinder;
 import android.os.PersistableBundle;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.ShareActionProvider;
 import android.widget.TextView;
@@ -98,6 +100,8 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
+
     NavigationView.OnNavigationItemSelectedListener navigationItemSelectedListener = new NavigationView.OnNavigationItemSelectedListener() {
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -160,20 +164,20 @@ public class MainActivity extends AppCompatActivity {
                             if(songs!=null) {
                                 musicPlayerService.setSongs(songs);
                                 musicPlayerService.setCurrSongPosition(pos);
-                                Log.i("queue", String.valueOf(songs.size()));
-                                Song currentSong=songs.get(pos);
-                                String title=currentSong.getTitle();
-                                if(title.length()>15)
-                                {
-                                    title=title.substring(0,15)+"...";
-                                }
-                                String artist=currentSong.getArtist();
-                                if(artist.length()>15)
-                                {
-                                    artist=artist.substring(0,15)+"...";
-                                }
-                                Player.player_title.setText(title);
-                                Player.player_artist.setText(artist);
+//                                Log.i("queue", String.valueOf(songs.size()));
+//                                Song currentSong=songs.get(pos);
+//                                String title=currentSong.getTitle();
+//                                if(title.length()>15)
+//                                {
+//                                    title=title.substring(0,15)+"...";
+//                                }
+//                                String artist=currentSong.getArtist();
+//                                if(artist.length()>15)
+//                                {
+//                                    artist=artist.substring(0,15)+"...";
+//                                }
+//                                Player.player_title.setText(title);
+//                                Player.player_artist.setText(artist);
                             }
                         }
                     }

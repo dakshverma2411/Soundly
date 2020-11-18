@@ -4,11 +4,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -19,7 +21,10 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -66,6 +71,7 @@ public class Player extends Fragment  {
     ImageView player_next;
     ImageView player_previous;
     ImageView player_queue;
+    ImageView player_cover;
     public static SeekBar seekBar;
 
     public static String title="-";
@@ -84,38 +90,94 @@ public class Player extends Fragment  {
         player_forward=(ImageView) rootView.findViewById(R.id.player_forward);
         player_rewind=(ImageView) rootView.findViewById(R.id.player_rewind);
         player_next=(ImageView) rootView.findViewById(R.id.player_next);
+        player_cover=(ImageView) rootView.findViewById(R.id.player_cover);
         player_previous = (ImageView) rootView.findViewById(R.id.player_previous);
         player_queue=(ImageView) rootView.findViewById(R.id.player_queue);
         player_queue.setOnClickListener(queueClickListener);
 
+        final MutableLiveData<Song> songName=musicPlayerService.getLiveCurrSong();
+        songName.observe(this, new Observer<Song>() {
+            @Override
+            public void onChanged(Song s) {
+                String title=songName.getValue().getTitle();
+                if(title.length()>20)
+                {
+                    title=title.substring(0,17)+"...";
+                }
+                String singer=songName.getValue().getArtist();
+                if(singer.length()>20)
+                {
+                    singer=singer.substring(0,17)+"...";
+                }
+                player_title.setText(title);
+                player_artist.setText(singer);
+            }
+        });
 
-        if(musicPlayerService.isSet)
+        if(!musicPlayerService.isPlaying)
         {
-            seekBar.setMax(musicPlayerService.getCurrSong().getDuration()/1000);
+            player_cover.setVisibility(View.INVISIBLE);
         }
         else
         {
-            seekBar.setMax(0);
+            player_cover.setVisibility(View.VISIBLE);
         }
 
-//        mHandler = new Handler();
-//        getActivity().runOnUiThread(new Runnable() {
-//
+        MutableLiveData<Boolean> liveIsPlaying=musicPlayerService.getLiveIsPlaying();
+        liveIsPlaying.observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                if(aBoolean==true)
+                {
+                    player_play.setImageResource(R.drawable.ic_pause);
+                    player_cover.setVisibility(View.VISIBLE);
+
+                }
+                else
+                {
+                    player_play.setImageResource(R.drawable.ic_player_play_logo);
+                    player_cover.setVisibility(View.INVISIBLE);
+                }
+            }
+        });
+
+        if(musicPlayerService.isSet)
+        {
+            if(seekBar!=null)
+            {
+                seekBar.setMax(musicPlayerService.getCurrSong().getDuration()/1000);
+            }
+
+        }
+        else
+        {
+            if(seekBar!=null)
+            {
+                seekBar.setMax(0);
+            }
+
+        }
+//        timer = new Timer();
+//        timer.scheduleAtFixedRate(new TimerTask() {
 //            @Override
 //            public void run() {
-//                    int mCurrentPosition = musicPlayerService.getCurrSongPosition() / 1000;
-//                    seekBar.setProgress(mCurrentPosition);
-//                mHandler.postDelayed(this, 1000);
+//                int mCurrentPosition = musicPlayerService.getCurrSongPosition() / 1000;
+//                seekBar.setProgress(mCurrentPosition);
 //            }
-//        });
-        timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
+//        },0,1000);
+
+         mHandler = new Handler();
+        getActivity().runOnUiThread(new Runnable() {
+
             @Override
             public void run() {
-                int mCurrentPosition = musicPlayerService.getCurrSongPosition() / 1000;
-                seekBar.setProgress(mCurrentPosition);
+                if(musicPlayerService.isSet){
+                    int mCurrentPosition = musicPlayerService.getCurrSongPosition() / 1000;
+                    seekBar.setProgress(mCurrentPosition);
+                }
+                mHandler.postDelayed(this, 1000);
             }
-        },0,1000);
+        });
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
@@ -138,6 +200,7 @@ public class Player extends Fragment  {
         });
 
         player_next.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onClick(View view) {
                 musicPlayerService.nextSong();
@@ -145,6 +208,7 @@ public class Player extends Fragment  {
         });
 
         player_previous.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onClick(View view) {
                 musicPlayerService.prevSong();
@@ -152,26 +216,24 @@ public class Player extends Fragment  {
         });
 
 
-        if(musicPlayerService.isSongPlaying())
-        {
-            player_play.setImageResource(R.drawable.ic_pause);
-        }
-        else
-        {
-            player_play.setImageResource(R.drawable.ic_player_play_logo);
-        }
         player_play.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onClick(View view) {
-                if(musicPlayerService.isSongPlaying()) {
-                    musicPlayerService.pauseMusic();
-                    player_play.setImageResource(R.drawable.ic_player_play_logo);
-                }
-                else
+                if(musicPlayerService.isSet)
                 {
-                    musicPlayerService.playMusic();
-                    player_play.setImageResource(R.drawable.ic_pause);
+                    if(musicPlayerService.isSongPlaying()) {
+                        musicPlayerService.pauseMusic();
+                    }
+                    else
+                    {
+                        musicPlayerService.playMusic();
+                    }
+                }else
+                {
+                    Toast.makeText(getContext(),"Please set a song to play",Toast.LENGTH_SHORT).show();
                 }
+
             }
         });
 
@@ -189,30 +251,16 @@ public class Player extends Fragment  {
             }
         });
 
-        if(musicPlayerService.isSet==true)
-        {
-            String title=musicPlayerService.getCurrSong().getTitle();
-            if(title.length()>15)
-            {
-                title=title.substring(0,15)+"...";
-            }
-            String artist=musicPlayerService.getCurrSong().getArtist();
-            if(artist.length()>15)
-            {
-                artist=artist.substring(0,15)+"...";
-            }
-            player_title.setText(title);
-            player_artist.setText(artist);
-        }
-
 
         return rootView;
 
     }
 
+
     View.OnClickListener queueClickListener=new View.OnClickListener() {
         @Override
         public void onClick(View view) {
+
             musicPlayerService.queueOpened=true;
             final BottomSheetDialog bottomSheetDialog=new BottomSheetDialog(getActivity(),R.style.BottomSheetDialogTheme);
 
@@ -235,6 +283,14 @@ public class Player extends Fragment  {
             ArrayList<Song> queueSongs=musicPlayerService.getSongs();
             int pos=musicPlayerService.getCurrSongPosition();
             adapter=new QueueAdapter(queueSongs,Util.getAppContext());
+
+            MutableLiveData<Song> liveCurrSong=musicPlayerService.getLiveCurrSong();
+            liveCurrSong.observe(getActivity(), new Observer<Song>() {
+                @Override
+                public void onChanged(Song song) {
+                    adapter.notifyDataSetChanged();
+                }
+            });
             recyclerView.setLayoutManager(new LinearLayoutManager(Util.getAppContext()));
             recyclerView.setAdapter(adapter);
             bottomSheetDialog.setContentView(bottomSheetView);
@@ -244,8 +300,8 @@ public class Player extends Fragment  {
 
     @Override
     public void onDestroy() {
+        mHandler=null;
         super.onDestroy();
-        timer.cancel();
     }
 }
 

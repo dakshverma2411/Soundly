@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -63,6 +64,20 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.ViewHolder> 
     public void onBindViewHolder(@NonNull final SongsAdapter.ViewHolder holder, final int position) {
         final Song song=songList.get(position);
         String title=song.getTitle();
+        if(MainActivity.musicPlayerService.isSet)
+        {
+            if(song.getTitle().equals(MainActivity.musicPlayerService.getCurrSong().getTitle()))
+            {
+                holder.title.setTextColor(Color.parseColor("#1DB954"));
+            }
+            else
+            {
+
+                holder.title.setTextColor(Color.parseColor("#000000"));
+            }
+        }
+
+
         if(title.length()>20)
         {
             title=title.substring(0,20)+"...";

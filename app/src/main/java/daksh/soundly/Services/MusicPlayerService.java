@@ -7,19 +7,27 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import daksh.soundly.Databases.Util;
 import daksh.soundly.MainActivity;
@@ -31,7 +39,7 @@ import daksh.soundly.ui.Player;
 
 import static daksh.soundly.App.CHANNEL_ID;
 
-public class MusicPlayerService extends Service implements MediaPlayer.OnCompletionListener{
+public class MusicPlayerService extends Service implements MediaPlayer.OnCompletionListener,AudioManager.OnAudioFocusChangeListener{
 
     public ArrayList<Song> songs;
     public Song currSong=null;
@@ -39,7 +47,40 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     public boolean isSet=false;
     public boolean isPlaying=false;
     public static boolean queueOpened=false;
+    private MutableLiveData<Song> liveCurrSong=new MutableLiveData<>();
+    private MutableLiveData<Boolean> liveIsPlaying=new MutableLiveData<>();
+    private MutableLiveData<Boolean> liveIsSet=new MutableLiveData<>();
     public MediaPlayer mediaPlayer;
+    private Timer timer;
+    AudioManager audioManager;
+
+
+    public MutableLiveData<Boolean> getLiveIsSet() {
+        if(liveIsSet==null)
+        {
+            liveIsSet=new MutableLiveData<>();
+            liveIsSet.setValue(false);
+        }
+        return liveIsSet;
+    }
+
+    public MutableLiveData<Boolean> getLiveIsPlaying()
+    {
+        if(liveIsPlaying==null)
+        {
+            liveIsPlaying=new MutableLiveData<>();
+            liveIsPlaying.setValue(false);
+        }
+        return liveIsPlaying;
+    }
+
+    public MutableLiveData<Song> getLiveCurrSong() {
+        if(liveCurrSong.getValue()==null)
+        {
+            liveCurrSong.setValue(new Song("-","-","-",0,null));
+        }
+        return liveCurrSong;
+    }
 
     public void setSongs(ArrayList<Song> songs) {
         Log.i("service","songs set");
@@ -90,6 +131,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         editor.putInt("current_song_position",currSongPosition);
         editor.commit();
         currSong=songs.get(i);
+        liveCurrSong.setValue(currSong);
         Log.i("service",String.valueOf(i));
         try {
             mediaPlayer.setDataSource(this, currSong.getPathToSong());
@@ -104,6 +146,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
             e.printStackTrace();
         }
         isSet=true;
+        liveIsSet.setValue(true);
         Player.seekBar.setMax(currSong.getDuration()/1000);
         mediaPlayer.setOnCompletionListener(this);
     }
@@ -145,27 +188,36 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void playMusic() {
 
-        Song currentSong=songs.get(currSongPosition);
-        String title=currentSong.getTitle();
-        if(title.length()>15)
+
+
+        int res=audioManager.requestAudioFocus(this,AudioManager.STREAM_MUSIC,AudioManager.AUDIOFOCUS_GAIN);
+        if(res==AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
         {
-            title=title.substring(0,15)+"...";
+            Song currentSong=songs.get(currSongPosition);
+            String title=currentSong.getTitle();
+            if(title.length()>15)
+            {
+                title=title.substring(0,15)+"...";
+            }
+            String artist=currentSong.getArtist();
+            if(artist.length()>15)
+            {
+                artist=artist.substring(0,15)+"...";
+            }
+            mediaPlayer.start();
+            isPlaying=true;
+            liveIsPlaying.setValue(true);
         }
-        String artist=currentSong.getArtist();
-        if(artist.length()>15)
-        {
-            artist=artist.substring(0,15)+"...";
-        }
-        Player.player_title.setText(title);
-        Player.player_artist.setText(artist);
-        mediaPlayer.start();
-        isPlaying=true;
+
     }
     public void pauseMusic() {
         mediaPlayer.pause();
+        audioManager.abandonAudioFocus(this);
         isPlaying=false;
+        liveIsPlaying.setValue(false);
     }
 
     public void seekplus() {
@@ -186,6 +238,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
         Log.i("service","song complete");
@@ -198,13 +251,10 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
             setCurrSongPosition(currSongPosition+1);
         }
         playMusic();
-        if(queueOpened)
-        {
-            Player.adapter.notifyDataSetChanged();
-        }
 //
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void nextSong()
     {
         if(isSet) {
@@ -224,8 +274,6 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
             {
                 artist=artist.substring(0,15)+"...";
             }
-            Player.player_title.setText(title);
-            Player.player_artist.setText(title);
             if(isPlaying) {
                 playMusic();
             }
@@ -233,6 +281,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void prevSong() {
         if(isSet) {
             if (currSongPosition == 0) {
@@ -251,13 +300,27 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
             {
                 artist=artist.substring(0,15)+"...";
             }
-            Player.player_title.setText(title);
-            Player.player_artist.setText(artist);
-            Player.title=currSong.getTitle();
             if(isPlaying) {
                 playMusic();
             }
         }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    public void onAudioFocusChange(int focusChange) {
+        switch (focusChange)
+        {
+            case AudioManager.AUDIOFOCUS_GAIN:
+                playMusic();
+                break;
+            case AudioManager.AUDIOFOCUS_LOSS:
+                pauseMusic();
+                break;
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                pauseMusic();
+        }
+
     }
 
     public class MyBinder extends Binder {
@@ -284,16 +347,19 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
         if(intent.getAction()=="PAUSE_SONG")
         {
             if(isPlaying)
             {
                 mediaPlayer.pause();
                 isPlaying=false;
+                liveIsPlaying.setValue(false);
             }
         }
         else
         {
+
             mediaPlayer.setAudioAttributes(
                     new AudioAttributes.Builder()
                             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
@@ -301,6 +367,8 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
                             .build()
             );
 
+
+            audioManager=(AudioManager) getSystemService(Context.AUDIO_SERVICE);
             // foreground service
             Intent notificationIntent=new Intent(this, MainActivity.class);
             notificationIntent.putExtra("notification","fromNotification");
@@ -313,7 +381,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
             Notification notification=new NotificationCompat.Builder(this,CHANNEL_ID)
                     .setContentTitle("Soundly")
                     .setContentText("playing song")
-                    .addAction(new NotificationCompat.Action(R.drawable.player_logo,"Pause",pPendingIntent))
+//                    .addAction(new NotificationCompat.Action(R.drawable.player_logo,"Pause",pPendingIntent))
                     .setSmallIcon(R.drawable.player_logo)
                     .setNotificationSilent()
                     .setContentIntent(pendingIntent)

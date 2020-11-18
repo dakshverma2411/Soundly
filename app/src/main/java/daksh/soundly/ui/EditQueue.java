@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -104,6 +105,7 @@ public class EditQueue extends AppCompatActivity {
                 songs.add(0,currentSong);
                 MainActivity.musicPlayerService.changePosition(0);
                 MainActivity.musicPlayerService.setSongs(songs);
+                Toast.makeText(this,"Queue updated",Toast.LENGTH_SHORT).show();
                 finish();
                 break;
             case R.id.cancel:
