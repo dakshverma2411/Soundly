@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/bg">
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Create Playlist"
+        android:padding="10dp"
+        android:layout_margin="10dp"
+        android:textColor="@android:color/white"
+        android:background="@drawable/button_bg"
+        android:id="@+id/playlist_create"
+        android:layout_alignParentBottom="true" />
+    <androidx.recyclerview.widget.RecyclerView
+        android:padding="10dp"
+        android:id="@+id/playlist_recycler_view"
+        android:layout_width="match_parent"
+        android:scrollbars="vertical"
+        android:layout_height="match_parent"
+        android:layout_above="@id/playlist_create" />
+</RelativeLayout>

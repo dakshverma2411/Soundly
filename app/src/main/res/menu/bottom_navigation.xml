@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+<!--    <item android:id="@+id/soundly"-->
+<!--        android:icon="@drawable/ic_baseline_cloud_circle_24"-->
+<!--        android:title="Soundly" />-->
+    <item android:id="@+id/player"
+        android:icon="@drawable/player_logo"
+        android:title="Player" />
+    <item android:id="@+id/songs"
+        android:icon="@drawable/songs_logo"
+        android:title="Songs" />
+    <item android:id="@+id/playlists"
+        android:icon="@drawable/playlist_logo"
+        android:title="Playlists" />
+</menu>
