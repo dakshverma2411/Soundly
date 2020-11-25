@@ -300,7 +300,6 @@ public class Player extends Fragment  {
 
     @Override
     public void onDestroy() {
-        mHandler=null;
         super.onDestroy();
     }
 }

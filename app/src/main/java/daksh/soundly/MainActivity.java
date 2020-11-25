@@ -146,41 +146,30 @@ public class MainActivity extends AppCompatActivity {
                     Player.player_artist.setText("-");
 
 
-                    SharedPreferences prefs= Util.getAppContext().getSharedPreferences(MainActivity.SHARED_PREFERENCES,MODE_PRIVATE);
-                    if(prefs!=null)
-                    {
-                        int pos=prefs.getInt("current_song_position",-1);
-                        String json=prefs.getString("queue",null);
-
-                        if(json!=null && pos!=-1)
-                        {
-                            Gson gson = new GsonBuilder()
-                                    .registerTypeAdapter(Uri.class, new UriDeserializer())
-                                    .create();
-
-                            Type type=new TypeToken<ArrayList<Song>>() {}.getType();
-                            ArrayList<Song> songs=gson.fromJson(json,type);
-
-                            if(songs!=null) {
-                                musicPlayerService.setSongs(songs);
-                                musicPlayerService.setCurrSongPosition(pos);
-//                                Log.i("queue", String.valueOf(songs.size()));
-//                                Song currentSong=songs.get(pos);
-//                                String title=currentSong.getTitle();
-//                                if(title.length()>15)
-//                                {
-//                                    title=title.substring(0,15)+"...";
-//                                }
-//                                String artist=currentSong.getArtist();
-//                                if(artist.length()>15)
-//                                {
-//                                    artist=artist.substring(0,15)+"...";
-//                                }
-//                                Player.player_title.setText(title);
-//                                Player.player_artist.setText(artist);
-                            }
-                        }
-                    }
+//                    SharedPreferences prefs= Util.getAppContext().getSharedPreferences(MainActivity.SHARED_PREFERENCES,MODE_PRIVATE);
+//                    if(prefs!=null)
+//                    {
+//                        int pos=prefs.getInt("current_song_position",-1);
+//                        String json=prefs.getString("queue",null);
+//
+//                        if(json!=null && pos!=-1)
+//                        {
+//                            Gson gson = new GsonBuilder()
+//                                    .registerTypeAdapter(Uri.class, new UriDeserializer())
+//                                    .create();
+//
+//                            Type type=new TypeToken<ArrayList<Song>>() {}.getType();
+//                            ArrayList<Song> songs=gson.fromJson(json,type);
+//
+//
+//                            if(songs!=null || songs.size()==0) {
+//
+//                                Log.i("sharedPrefs",String.valueOf(songs.size())+" "+pos);
+//                                musicPlayerService.setSongs(songs);
+//                                musicPlayerService.setCurrSongPosition(pos);
+//                            }
+//                        }
+//                    }
                     isBound=true;
 
                 }
@@ -207,6 +196,9 @@ public class MainActivity extends AppCompatActivity {
 
             Fragment fragment=null;
             switch (item.getItemId()) {
+                case R.id.soundly:
+                    fragment=new Soundly();
+                    break;
                 case R.id.player:
                     fragment=new Player();
                     toolbar.setTitle("Player");

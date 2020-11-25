@@ -10,6 +10,7 @@ public class Util {
 
     public static final String SONG_ARTIST="songArtist";
     public static final String SONG_ALBUM="songAlbum";
+    public static final String SONG_ONLINE="songOnline";
 
     public static final String SONG_PATH="songPath";
 

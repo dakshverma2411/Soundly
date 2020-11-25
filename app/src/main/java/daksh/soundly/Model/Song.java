@@ -8,13 +8,25 @@ public class Song {
     public String album;
     public int duration;
     public Uri pathToSong;
+    public int online;
 
-    public Song(String title, String artist, String album, int duration, Uri pathToSong) {
+    public Song(String title, String artist, String album, int duration, Uri pathToSong,int online) {
         this.title = title;
         this.artist = artist;
         this.album = album;
         this.duration = duration;
         this.pathToSong = pathToSong;
+        this.online=online;
+    }
+
+
+
+    public int isOnline() {
+        return online;
+    }
+
+    public void setOnline(int online) {
+        this.online = online;
     }
 
     public String getTitle() {

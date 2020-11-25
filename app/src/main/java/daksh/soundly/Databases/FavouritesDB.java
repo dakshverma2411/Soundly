@@ -59,7 +59,7 @@ public class FavouritesDB extends SQLiteOpenHelper {
                     String album=cursor.getString(album_index);
                     Uri path= Uri.parse(cursor.getString(path_index));
                     int duration=cursor.getInt(duration_index);
-                    Song song=new Song(title,artist,album,duration,path);
+                    Song song=new Song(title,artist,album,duration,path,0);
                     songs.add(song);
                 }while(cursor.moveToNext());
             }

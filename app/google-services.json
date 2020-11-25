@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "241006855293",
+    "firebase_url": "https://soundly-9a9b1.firebaseio.com",
+    "project_id": "soundly-9a9b1",
+    "storage_bucket": "soundly-9a9b1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:241006855293:android:d8db04465f6f2c87319d14",
+        "android_client_info": {
+          "package_name": "daksh.soundly"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "241006855293-c3po4ks5am9514h2np85kmpg836qafmm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-shtK8iDLotTzXDtSbVz8uUvxi3CO18w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "241006855293-c3po4ks5am9514h2np85kmpg836qafmm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -33,7 +33,8 @@ public class PlaylistDatabase extends SQLiteOpenHelper {
                 Util.SONG_ARTIST + " TEXT, " +
                 Util.SONG_ALBUM + " TEXT, " +
                 Util.SONG_PATH + " TEXT, " +
-                Util.SONG_DURATION + " INTEGER); ";
+                Util.SONG_DURATION + " INTEGER, " +
+                Util.SONG_ONLINE + " INTEGER); ";
         SQLiteDatabase db=this.getWritableDatabase();
         db.execSQL(CREATE_TABLE_QUERY);
     }
@@ -57,6 +58,7 @@ public class PlaylistDatabase extends SQLiteOpenHelper {
             values.put(Util.SONG_ALBUM,song.getAlbum());
             values.put(Util.SONG_PATH,song.getPathToSong().toString());
             values.put(Util.SONG_DURATION,song.getDuration());
+            values.put(Util.SONG_ONLINE,song.isOnline());
             db.insert(table,null,values);
             db.close();
             return true;
@@ -84,13 +86,15 @@ public class PlaylistDatabase extends SQLiteOpenHelper {
                 int artist_index=cursor.getColumnIndex(Util.SONG_ARTIST);
                 int duration_index=cursor.getColumnIndex(Util.SONG_DURATION);
                 int path_index=cursor.getColumnIndex(Util.SONG_PATH);
+                int online_index=cursor.getColumnIndex(Util.SONG_ONLINE);
                 do{
                     String title=cursor.getString(title_index);
                     String artist=cursor.getString(artist_index);
                     String album=cursor.getString(album_index);
                     Uri path= Uri.parse(cursor.getString(path_index));
                     int duration=cursor.getInt(duration_index);
-                    Song song=new Song(title,artist,album,duration,path);
+                    int online=cursor.getInt(online_index);
+                    Song song=new Song(title,artist,album,duration,path,online);
                     songs.add(song);
                 }while(cursor.moveToNext());
             }

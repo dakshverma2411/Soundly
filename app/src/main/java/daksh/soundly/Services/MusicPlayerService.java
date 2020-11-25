@@ -77,7 +77,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     public MutableLiveData<Song> getLiveCurrSong() {
         if(liveCurrSong.getValue()==null)
         {
-            liveCurrSong.setValue(new Song("-","-","-",0,null));
+            liveCurrSong.setValue(new Song("-","-","-",0,null,0));
         }
         return liveCurrSong;
     }
@@ -124,6 +124,10 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
             mediaPlayer.release();
             mediaPlayer=new MediaPlayer();
         }
+        if(mediaPlayer==null)
+        {
+            mediaPlayer=new MediaPlayer();
+        }
 
         this.currSongPosition=i;
         SharedPreferences prefs= Util.getAppContext().getSharedPreferences(MainActivity.SHARED_PREFERENCES, Context.MODE_PRIVATE);
@@ -134,7 +138,15 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         liveCurrSong.setValue(currSong);
         Log.i("service",String.valueOf(i));
         try {
-            mediaPlayer.setDataSource(this, currSong.getPathToSong());
+            if(currSong.isOnline()==1)
+            {
+                mediaPlayer.setDataSource(currSong.getPathToSong().toString());
+            }
+            else
+            {
+                mediaPlayer.setDataSource(this, currSong.getPathToSong());
+            }
+
             Log.i("currSong",currSong.getPathToSong().toString());
         }
         catch (Exception e) {

@@ -163,7 +163,7 @@ public class Songs extends Fragment {
                     long id=cursor.getLong(idColumn);
                     Uri songUri= ContentUris.withAppendedId(
                             android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
-                    songs.add(new Song(title,artist,album,duration,songUri));
+                    songs.add(new Song(title,artist,album,duration,songUri,0));
                     Log.i("songslist",songUri.toString());
                 }while(cursor.moveToNext());
             }
@@ -202,7 +202,7 @@ public class Songs extends Fragment {
                         long id=cursor.getLong(idColumn);
                         Uri songUri= ContentUris.withAppendedId(
                                 android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
-                        songs.add(new Song(title,artist,album,duration,songUri));
+                        songs.add(new Song(title,artist,album,duration,songUri,0));
                     }while(cursor.moveToNext());
                 }
 
@@ -253,7 +253,7 @@ public class Songs extends Fragment {
                         long id=cursor.getLong(idColumn);
                         Uri songUri= ContentUris.withAppendedId(
                                 android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
-                        songs.add(new Song(title,artist,album,duration,songUri));
+                        songs.add(new Song(title,artist,album,duration,songUri,0));
                     }while(cursor.moveToNext());
                 }
 
