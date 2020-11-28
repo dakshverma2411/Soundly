@@ -20,4 +20,8 @@
                 android:icon="@drawable/ic_baseline_stars_24"/>
         </menu>
     </item>
+
+    <item android:title="Logout"
+        android:icon="@drawable/ic_baseline_exit_to_app_24"
+        android:id="@+id/logout_drawer" />
 </menu>

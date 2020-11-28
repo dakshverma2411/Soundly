@@ -27,6 +27,7 @@ public class EditQueue extends AppCompatActivity {
     ArrayList<Song> songs;
     RecyclerView recyclerView;
     Song currentSong;
+    EditQueueAdapter adapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,7 +40,7 @@ public class EditQueue extends AppCompatActivity {
 
         songs=getSongs(pos);
         recyclerView=findViewById(R.id.edit_queue_recycler_view);
-        EditQueueAdapter adapter=new EditQueueAdapter(songs,getApplicationContext());
+        adapter=new EditQueueAdapter(songs,getApplicationContext());
         recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
         recyclerView.setAdapter(adapter);
         ItemTouchHelper itemTouchHelper=new ItemTouchHelper(simpleCallback);
@@ -73,7 +74,7 @@ public class EditQueue extends AppCompatActivity {
         return songs;
     }
 
-    ItemTouchHelper.SimpleCallback simpleCallback=new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP | ItemTouchHelper.DOWN | ItemTouchHelper.START | ItemTouchHelper.END,0) {
+    ItemTouchHelper.SimpleCallback simpleCallback=new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP | ItemTouchHelper.DOWN | ItemTouchHelper.START | ItemTouchHelper.END,ItemTouchHelper.LEFT| ItemTouchHelper.RIGHT) {
         @Override
         public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
             int fromPosition=viewHolder.getAdapterPosition();
@@ -85,7 +86,8 @@ public class EditQueue extends AppCompatActivity {
 
         @Override
         public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-
+            songs.remove(viewHolder.getAdapterPosition());
+            adapter.notifyDataSetChanged();
         }
     };
 

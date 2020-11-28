@@ -14,7 +14,10 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
+import android.widget.Toast;
+
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
@@ -39,7 +42,7 @@ import daksh.soundly.ui.Player;
 
 import static daksh.soundly.App.CHANNEL_ID;
 
-public class MusicPlayerService extends Service implements MediaPlayer.OnCompletionListener,AudioManager.OnAudioFocusChangeListener{
+public class MusicPlayerService extends Service implements MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnBufferingUpdateListener {
 
     public ArrayList<Song> songs;
     public Song currSong=null;
@@ -47,11 +50,11 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     public boolean isSet=false;
     public boolean isPlaying=false;
     public static boolean queueOpened=false;
+    private int bufferUpdate=0;
     private MutableLiveData<Song> liveCurrSong=new MutableLiveData<>();
     private MutableLiveData<Boolean> liveIsPlaying=new MutableLiveData<>();
     private MutableLiveData<Boolean> liveIsSet=new MutableLiveData<>();
     public MediaPlayer mediaPlayer;
-    private Timer timer;
     AudioManager audioManager;
 
 
@@ -85,18 +88,17 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     public void setSongs(ArrayList<Song> songs) {
         Log.i("service","songs set");
         this.songs=songs;
-        SharedPreferences prefs= Util.getAppContext().getSharedPreferences(MainActivity.SHARED_PREFERENCES, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor=prefs.edit();
-//        editor.putInt("current_song_position",currSongPosition);
         Gson gson = new GsonBuilder()
                 .registerTypeAdapter(Uri.class, new UriSerializer())
                 .create();
         String json=gson.toJson(songs);
-        editor.putString("queue",json);
-        editor.commit();
     }
     public void addToQueue(Song song)
     {
+        if(this.songs==null)
+        {
+            songs=new ArrayList<>();
+        }
         this.songs.add(currSongPosition,song);
         currSongPosition++;
         SharedPreferences prefs= Util.getAppContext().getSharedPreferences(MainActivity.SHARED_PREFERENCES, Context.MODE_PRIVATE);
@@ -130,10 +132,6 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         }
 
         this.currSongPosition=i;
-        SharedPreferences prefs= Util.getAppContext().getSharedPreferences(MainActivity.SHARED_PREFERENCES, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor=prefs.edit();
-        editor.putInt("current_song_position",currSongPosition);
-        editor.commit();
         currSong=songs.get(i);
         liveCurrSong.setValue(currSong);
         Log.i("service",String.valueOf(i));
@@ -141,25 +139,23 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
             if(currSong.isOnline()==1)
             {
                 mediaPlayer.setDataSource(currSong.getPathToSong().toString());
+                mediaPlayer.setOnBufferingUpdateListener(this);
             }
             else
             {
                 mediaPlayer.setDataSource(this, currSong.getPathToSong());
             }
-
             Log.i("currSong",currSong.getPathToSong().toString());
+            mediaPlayer.setOnPreparedListener(this);
+            mediaPlayer.prepareAsync();
         }
         catch (Exception e) {
+            Toast.makeText(this,"An error occured",Toast.LENGTH_SHORT).show();
+        }
 
-        }
-        try {
-            mediaPlayer.prepare();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         isSet=true;
         liveIsSet.setValue(true);
-        Player.seekBar.setMax(currSong.getDuration()/1000);
+//        Player.seekBar.setMax(currSong.getDuration()/1000);
         mediaPlayer.setOnCompletionListener(this);
     }
 
@@ -200,36 +196,37 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     }
 
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     public void playMusic() {
 
-
-
-        int res=audioManager.requestAudioFocus(this,AudioManager.STREAM_MUSIC,AudioManager.AUDIOFOCUS_GAIN);
-        if(res==AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
-        {
-            Song currentSong=songs.get(currSongPosition);
-            String title=currentSong.getTitle();
-            if(title.length()>15)
+            int res=audioManager.requestAudioFocus(this,AudioManager.STREAM_MUSIC,AudioManager.AUDIOFOCUS_GAIN);
+            if(res==AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
             {
-                title=title.substring(0,15)+"...";
+                Song currentSong=songs.get(currSongPosition);
+                String title=currentSong.getTitle();
+                if(title.length()>15)
+                {
+                    title=title.substring(0,15)+"...";
+                }
+                String artist=currentSong.getArtist();
+                if(artist.length()>15)
+                {
+                    artist=artist.substring(0,15)+"...";
+                }
+                mediaPlayer.start();
+                isPlaying=true;
+                liveIsPlaying.setValue(true);
             }
-            String artist=currentSong.getArtist();
-            if(artist.length()>15)
-            {
-                artist=artist.substring(0,15)+"...";
-            }
-            mediaPlayer.start();
-            isPlaying=true;
-            liveIsPlaying.setValue(true);
-        }
 
     }
     public void pauseMusic() {
-        mediaPlayer.pause();
-        audioManager.abandonAudioFocus(this);
-        isPlaying=false;
-        liveIsPlaying.setValue(false);
+        if(mediaPlayer!=null && mediaPlayer.isPlaying())
+        {
+            mediaPlayer.pause();
+            audioManager.abandonAudioFocus(this);
+            isPlaying=false;
+            liveIsPlaying.setValue(false);
+        }
+
     }
 
     public void seekplus() {
@@ -253,6 +250,14 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
+        SharedPreferences prefs= PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        Boolean repeat_one=prefs.getBoolean("repeat_one",false);
+        if(repeat_one)
+        {
+            setCurrSongPosition(currSongPosition);
+            return;
+        }
+
         Log.i("service","song complete");
         if(currSongPosition==songs.size()-1)
         {
@@ -262,8 +267,6 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
         {
             setCurrSongPosition(currSongPosition+1);
         }
-        playMusic();
-//
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -286,9 +289,9 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
             {
                 artist=artist.substring(0,15)+"...";
             }
-            if(isPlaying) {
-                playMusic();
-            }
+//            if(isPlaying) {
+//                playMusic();
+//            }
         }
     }
 
@@ -312,9 +315,9 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
             {
                 artist=artist.substring(0,15)+"...";
             }
-            if(isPlaying) {
-                playMusic();
-            }
+//            if(isPlaying) {
+//                playMusic();
+//            }
         }
     }
 
@@ -327,12 +330,29 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
                 playMusic();
                 break;
             case AudioManager.AUDIOFOCUS_LOSS:
-                pauseMusic();
+//                pauseMusic();
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                 pauseMusic();
         }
 
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    public void onPrepared(MediaPlayer mediaPlayer) {
+        Log.i("onPrepared","here");
+        playMusic();
+    }
+
+    @Override
+    public void onBufferingUpdate(MediaPlayer mediaPlayer, int i) {
+        bufferUpdate=i;
+    }
+
+    public int getBufferUpdate()
+    {
+        return bufferUpdate;
     }
 
     public class MyBinder extends Binder {
@@ -360,18 +380,10 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        if(intent.getAction()=="PAUSE_SONG")
-        {
-            if(isPlaying)
-            {
-                mediaPlayer.pause();
-                isPlaying=false;
-                liveIsPlaying.setValue(false);
-            }
-        }
-        else
-        {
 
+        Log.i("serviceStart","here");
+        if(1==1)
+        {
             mediaPlayer.setAudioAttributes(
                     new AudioAttributes.Builder()
                             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
@@ -409,6 +421,7 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
 
     @Override
     public void onDestroy() {
+        Log.i("serviceDestroy","here");
         mediaPlayer.stop();
         mediaPlayer.release();
         currSong=null;
@@ -429,6 +442,19 @@ public class MusicPlayerService extends Service implements MediaPlayer.OnComplet
     public Song getCurrSong()
     {
         return currSong;
+    }
+
+
+    public void closeService()
+    {
+        stopForeground(true);
+        songs=null;
+        currSong=null;
+        isSet=false;
+        isPlaying=false;
+        queueOpened=false;
+        bufferUpdate=0;
+        stopSelf();
     }
 
 

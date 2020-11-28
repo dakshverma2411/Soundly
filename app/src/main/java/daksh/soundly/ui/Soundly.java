@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -54,13 +55,14 @@ public class Soundly extends Fragment {
         DatabaseReference ref=firebaseDatabase.getReference().child("Collections");
         final ArrayList<Playlist> collections=new ArrayList<>();
         recyclerViewSoundly=(RecyclerView) rootView.findViewById(R.id.soundly_recycler_view);
-        recyclerViewSoundly.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerViewSoundly.setLayoutManager(new GridLayoutManager(getContext(),2));
         adapter=new SoundlyPlaylistAdapter(getContext(),collections);
         recyclerViewSoundly.setAdapter(adapter);
 
         ref.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                Log.i("soundly","here");
                 progressBar.setVisibility(View.GONE);
                 String name=snapshot.getKey();
                 int number=snapshot.getValue(Integer.class);

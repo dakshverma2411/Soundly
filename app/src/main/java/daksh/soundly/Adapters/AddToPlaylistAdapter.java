@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -37,16 +38,24 @@ public class AddToPlaylistAdapter extends RecyclerView.Adapter<AddToPlaylistAdap
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
         final Playlist playlist=playlists.get(position);
         holder.playlist_name.setText(playlist.getName().replace("_"," "));
-        holder.numSongs.setText(String.valueOf(playlist.getNumberOfsong()+" Songs"));
+        final int num=playlist.getNumberOfsong();
+        holder.numSongs.setText(String.valueOf("Songs : "+num));
         holder.playlist_name.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 DataBaseFunctions.setContext(context);
-                DataBaseFunctions.addSongToPlaylist(playlist,song);
-                SongsAdapter.bottomSheetDialog.dismiss();
+                if(DataBaseFunctions.addSongToPlaylist(playlist,song))
+                {
+                    Toast.makeText(context,"Song added to playlist",Toast.LENGTH_SHORT).show();
+                    holder.numSongs.setText("Songs : "+String.valueOf(num+1));
+                }
+                else
+                {
+                    Toast.makeText(context,"Song is already present in the playlist", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }

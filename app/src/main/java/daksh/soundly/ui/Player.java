@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -52,11 +53,6 @@ import daksh.soundly.Databases.Util;
 import daksh.soundly.MainActivity;
 import daksh.soundly.Model.Song;
 import daksh.soundly.R;
-import daksh.soundly.Serializer.UriDeserializer;
-import daksh.soundly.Services.MusicPlayerService;
-import daksh.soundly.Services.MusicService;
-
-import static android.content.Context.MODE_PRIVATE;
 import static daksh.soundly.MainActivity.musicPlayerService;
 
 public class Player extends Fragment  {
@@ -72,8 +68,8 @@ public class Player extends Fragment  {
     ImageView player_previous;
     ImageView player_queue;
     ImageView player_cover;
+    ImageView repeat;
     public static SeekBar seekBar;
-
     public static String title="-";
     public static String artist="-";
     Timer timer;
@@ -93,7 +89,35 @@ public class Player extends Fragment  {
         player_cover=(ImageView) rootView.findViewById(R.id.player_cover);
         player_previous = (ImageView) rootView.findViewById(R.id.player_previous);
         player_queue=(ImageView) rootView.findViewById(R.id.player_queue);
+        repeat=(ImageView) rootView.findViewById(R.id.player_repeat);
         player_queue.setOnClickListener(queueClickListener);
+
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        final Boolean[] repeat_one = {prefs.getBoolean("repeat_one", false)};
+        if(repeat_one[0])
+        {
+            repeat.setImageResource(R.drawable.ic_repeat);
+        }
+        else
+        {
+            repeat.setImageResource(R.drawable.repeat_all);
+        }
+        repeat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(repeat_one[0])
+                {
+                    repeat.setImageResource(R.drawable.repeat_all);
+                }
+                else
+                {
+                    repeat.setImageResource(R.drawable.ic_repeat);
+                }
+                prefs.edit().putBoolean("repeat_one",!repeat_one[0]).apply();
+                repeat_one[0] =!repeat_one[0];
+            }
+        });
+
 
         final MutableLiveData<Song> songName=musicPlayerService.getLiveCurrSong();
         songName.observe(this, new Observer<Song>() {
@@ -108,6 +132,11 @@ public class Player extends Fragment  {
                 if(singer.length()>20)
                 {
                     singer=singer.substring(0,17)+"...";
+                }
+                if(seekBar!=null)
+                {
+//                    seekBar.setMax(songName.getValue().getDuration()/1000);
+                    seekBar.setMax(100);
                 }
                 player_title.setText(title);
                 player_artist.setText(singer);
@@ -166,18 +195,23 @@ public class Player extends Fragment  {
 //            }
 //        },0,1000);
 
-         mHandler = new Handler();
-        getActivity().runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                if(musicPlayerService.isSet){
-                    int mCurrentPosition = musicPlayerService.getCurrSongPosition() / 1000;
-                    seekBar.setProgress(mCurrentPosition);
-                }
-                mHandler.postDelayed(this, 1000);
-            }
-        });
+//         mHandler = new Handler();
+//        getActivity().runOnUiThread(new Runnable() {
+//
+//            @Override
+//            public void run() {
+//                if(musicPlayerService!=null)
+//                {
+//                    if(musicPlayerService.isSet){
+//                        int mCurrentPosition = musicPlayerService.getCurrSongPosition() / 1000;
+//                        seekBar.setProgress(mCurrentPosition);
+//                        seekBar.setSecondaryProgress(musicPlayerService.getBufferUpdate());
+//                    }
+//                    mHandler.postDelayed(this, 1000);
+//                }
+//
+//            }
+//        });
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {

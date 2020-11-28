@@ -6,6 +6,7 @@ import android.content.ContentUris;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -75,7 +76,7 @@ public class Songs extends Fragment {
 
             @Override
             public void afterTextChanged(Editable editable) {
-                filter(editable.toString());
+                filter(editable.toString().toLowerCase());
             }
         });
         recyclerView = (RecyclerView) rootView.findViewById(R.id.songs_recyclerview);
@@ -135,18 +136,55 @@ public class Songs extends Fragment {
     {
         if(Build.VERSION.SDK_INT<Build.VERSION_CODES.M)
         {
+            new GetSongTask().execute();
+        }
+        else
+        {
+            if(ContextCompat.checkSelfPermission(rootView.getContext(),Manifest.permission.READ_EXTERNAL_STORAGE)==PackageManager.PERMISSION_GRANTED)
+            {
+                new GetSongTask().execute();
+            }
+            else
+            {
+                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_CODE);
+            }
+        }
 
-            songs=new ArrayList<>();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(requestCode==101) {
+            if(grantResults.length>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED)
+            {
+                Toast.makeText(rootView.getContext(),"Access Granted",Toast.LENGTH_LONG).show();
+                new GetSongTask().execute();
+            }
+            else
+            {
+                Toast.makeText(rootView.getContext(),"denied",Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    class GetSongTask extends AsyncTask<Void,Void,ArrayList<Song>>
+    {
+
+        @Override
+        protected ArrayList<Song> doInBackground(Void... voids) {
+            ArrayList<Song> songs=new ArrayList<>();
             ContentResolver contentResolver=rootView.getContext().getContentResolver();
             Uri uri= MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
             Cursor cursor=contentResolver.query(uri,null,null,null,null);
             if(cursor==null)
             {
                 Log.i("content resolver","query failed");
+                return songs;
             }
             else if(!cursor.moveToFirst())
             {
                 Log.i("content provider", "no media available");
+                return songs;
             }
             else
             {
@@ -166,106 +204,18 @@ public class Songs extends Fragment {
                     songs.add(new Song(title,artist,album,duration,songUri,0));
                     Log.i("songslist",songUri.toString());
                 }while(cursor.moveToNext());
+                return songs;
             }
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Song> loadedSongs) {
+            songs=loadedSongs;
             adapter = new SongsAdapter(rootView.getContext(), songs);
             recyclerView.setLayoutManager(new LinearLayoutManager(rootView.getContext()));
             recyclerView.setAdapter(adapter);
         }
-        else
-        {
-            if(ContextCompat.checkSelfPermission(rootView.getContext(),Manifest.permission.READ_EXTERNAL_STORAGE)==PackageManager.PERMISSION_GRANTED)
-            {
-                songs=new ArrayList<>();
-                ContentResolver contentResolver=rootView.getContext().getContentResolver();
-                Uri uri= MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-                Cursor cursor=contentResolver.query(uri,null,null,null,null);
-                if(cursor==null)
-                {
-                    Log.i("content resolver","query failed");
-                }
-                else if(!cursor.moveToFirst())
-                {
-                    Log.i("content provider", "no media available");
-                }
-                else
-                {
-                    int titleColumn = cursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
-                    int artistColumn=cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
-                    int albumcolumn=cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM);
-                    int durationColumn=cursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
-                    int idColumn=cursor.getColumnIndex(MediaStore.Audio.Media._ID);
-                    do{
-                        String title=cursor.getString(titleColumn);
-                        String artist=cursor.getString(artistColumn);
-                        String album=cursor.getString(albumcolumn);
-                        int duration=cursor.getInt(durationColumn);
-                        long id=cursor.getLong(idColumn);
-                        Uri songUri= ContentUris.withAppendedId(
-                                android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
-                        songs.add(new Song(title,artist,album,duration,songUri,0));
-                    }while(cursor.moveToNext());
-                }
-
-                adapter = new SongsAdapter(rootView.getContext(), songs);
-                recyclerView.setLayoutManager(new LinearLayoutManager(rootView.getContext()));
-                recyclerView.setAdapter(adapter);
-            }
-            else
-            {
-                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_CODE);
-            }
-        }
-
-
-
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if(requestCode==101) {
-            if(grantResults.length>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED)
-            {
-                Toast.makeText(rootView.getContext(),"granted",Toast.LENGTH_LONG).show();
-                songs=new ArrayList<>();
-                ContentResolver contentResolver=rootView.getContext().getContentResolver();
-                Uri uri= MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-                Cursor cursor=contentResolver.query(uri,null,null,null,null);
-                if(cursor==null)
-                {
-                    Log.i("content resolver","query failed");
-                }
-                else if(!cursor.moveToFirst())
-                {
-                    Log.i("content provider", "no media available");
-                }
-                else
-                {
-                    int titleColumn = cursor.getColumnIndex(MediaStore.Audio.Media.TITLE);
-                    int artistColumn=cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST);
-                    int albumcolumn=cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM);
-                    int idColumn=cursor.getColumnIndex(MediaStore.Audio.Media._ID);
-                    int durationColumn=cursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
-                    do{
-                        String title=cursor.getString(titleColumn);
-                        String artist=cursor.getString(artistColumn);
-                        String album=cursor.getString(albumcolumn);
-                        int duration=cursor.getInt(durationColumn);
-                        long id=cursor.getLong(idColumn);
-                        Uri songUri= ContentUris.withAppendedId(
-                                android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
-                        songs.add(new Song(title,artist,album,duration,songUri,0));
-                    }while(cursor.moveToNext());
-                }
-
-
-                adapter = new SongsAdapter(rootView.getContext(), songs);
-                recyclerView.setLayoutManager(new LinearLayoutManager(rootView.getContext()));
-                recyclerView.setAdapter(adapter);
-            }
-            else
-            {
-                Toast.makeText(rootView.getContext(),"denied",Toast.LENGTH_LONG).show();
-            }
-        }
     }
 }
+
+

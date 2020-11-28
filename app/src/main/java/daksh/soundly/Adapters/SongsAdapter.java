@@ -66,7 +66,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.ViewHolder> 
     public void onBindViewHolder(@NonNull final SongsAdapter.ViewHolder holder, final int position) {
         final Song song=songList.get(position);
         String title=song.getTitle();
-        if(MainActivity.musicPlayerService.isSet)
+        if(MainActivity.musicPlayerService!=null && MainActivity.musicPlayerService.isSet)
         {
             if(song.getTitle().equals(MainActivity.musicPlayerService.getCurrSong().getTitle()))
             {
@@ -92,14 +92,14 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.ViewHolder> 
         holder.title.setText(title);
         holder.artist.setText(artist);
         final Uri path=song.getPathToSong();
-        holder.title.setOnClickListener(new View.OnClickListener() {
+        holder.linearLayout.setOnClickListener(new View.OnClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onClick(View view) {
 
                 MainActivity.musicPlayerService.setSongs(songList);
                 MainActivity.musicPlayerService.setCurrSongPosition(position);
-                MainActivity.musicPlayerService.playMusic();
+//                MainActivity.musicPlayerService.playMusic();
 
             }
         });
@@ -225,11 +225,13 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.ViewHolder> 
 
         private TextView title;
         private TextView artist;
+        LinearLayout linearLayout;
         ImageView more;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             title=(TextView) itemView.findViewById(R.id.item_song_name);
+            linearLayout=(LinearLayout) itemView.findViewById(R.id.list_item_clickable);
             more=(ImageView) itemView.findViewById(R.id.item_more);
             artist=(TextView) itemView.findViewById(R.id.item_song_singer);
         }

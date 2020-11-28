@@ -25,7 +25,7 @@ public class DataBaseFunctions {
         return allPlaylists.getAllPlaylists();
     }
 
-    public static void addSongToPlaylist(Playlist playlist, Song song)
+    public static boolean addSongToPlaylist(Playlist playlist, Song song)
     {
         AllPlaylists allPlaylists=new AllPlaylists(context);
         PlaylistDatabase playlistDatabase=new PlaylistDatabase(context);
@@ -34,10 +34,11 @@ public class DataBaseFunctions {
         {
             Log.i("add_song","done");
             allPlaylists.addSongToPlaylist(playlist);
+            return true;
         }
         else
         {
-            Log.i("add_song","failed");
+            return false;
         }
     }
 
@@ -57,5 +58,15 @@ public class DataBaseFunctions {
         AllPlaylists allPlaylists=new AllPlaylists(Util.getAppContext());
         playlistDatabase.deletePlaylist(playlist_name);
         allPlaylists.deletePlaylist(playlist_name);
+    }
+
+    public static void deletaAllPlaylist()
+    {
+        AllPlaylists allPlaylists=new AllPlaylists(Util.getAppContext());
+        ArrayList<Playlist> playlists=allPlaylists.getAllPlaylists();
+        for(Playlist playlist:playlists)
+        {
+            deletePlaylist(playlist);
+        }
     }
 }

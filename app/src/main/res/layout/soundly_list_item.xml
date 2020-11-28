@@ -5,37 +5,53 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_marginTop="10dp"
-        android:layout_marginRight="10dp"
-        android:layout_marginLeft="10dp"
-        app:cardCornerRadius="10dp"
         android:id="@+id/soundly_card_view"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_marginLeft="2dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp"
+        android:layout_marginRight="2dp"
         android:elevation="0dp"
         android:outlineSpotShadowColor="@color/cardview_dark_background"
-        android:layout_height="wrap_content">
+        app:cardCornerRadius="10dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
+            android:background="#FFFFFF"
             android:padding="20dp">
+
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:layout_height="100dp"
+                android:hapticFeedbackEnabled="true"
+                android:layout_width="100dp"
+                android:padding="10dp"
+                android:src="@raw/punjabi_songs"
+                android:id="@+id/cover_image"
+                android:layout_centerHorizontal="true"/>
+
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_height="wrap_content"
-                android:text="Punjabi Hits"
                 android:id="@+id/soundly_item_name"
-                android:textColor="@android:color/black"
-                android:textStyle="bold"
-                android:textSize="24sp" />
-            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
+                android:gravity="center_horizontal"
+                android:text="Punjabi Hits"
+                android:layout_below="@id/cover_image"
+                android:textColor="@android:color/black"
+                android:textSize="20dp"
+                android:textStyle="bold" />
+
+            <TextView
                 android:id="@+id/soundly_item_songs_number"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_below="@id/soundly_item_name"
+                android:layout_centerHorizontal="true"
                 android:paddingTop="2dp"
-                android:text="20songs"/>
+                android:text="20songs" />
         </RelativeLayout>
 
     </androidx.cardview.widget.CardView>
